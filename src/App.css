@@ -44,11 +44,11 @@
   display:flex;
 }
 .CountButton{
-  width: 1000px;
-  height: 400px;
+  width: 300px;
+  height: 90px;
   position:relative;
-  top:-50px;
-  font-size: 150px;
+  top:10px;
+  font-size: 30px;
   text-align: center;
 }
 .timer{

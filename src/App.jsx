@@ -4,136 +4,128 @@ import './App.css';
 import GeminiComponent from "./geminicomponent";
 import React from "react";
 import ReactMarkdown from 'react-markdown';
-let secmode=0
-var cps=0
+var bpmm=0, barss=0;
 function Home() {
   const navigate = useNavigate();
-
-  function one(){
-    secmode=1
-    navigate("/count")
+  function gocount(){
+    const bpmInput=document.getElementById("bpm").value;
+    const barsInput=document.getElementById("bars").value;
+    bpmm=parseInt(bpmInput,10);
+    barss=parseInt(barsInput,10);
+    console.log(bpmm);
+    console.log(barss);
+    navigate("/TapTest")
   }
-  function three(){
-    secmode=3
-    navigate("/count")
-  }
-  function five(){
-    secmode=5
-    navigate("/count")
-  }
-  function ten(){
-    secmode=10
-    navigate("/count")
-  }
-  function fifteen(){
-    secmode=15
-    navigate("/count")
-  }
-  function thirty(){
-    secmode=30
-    navigate("/count")
-  }
-  function sixty(){
-    secmode=60
-    navigate("/count")
-  }
-  function one_hundred(){
-    secmode=100
-    navigate("/count")
-  }
-  function one_hundred_and_eighty(){
-    secmode=180
-    navigate("/count")
-  }
-
   return (
     <div>
-      <h1>手速測試(CPS)</h1>
-      <p>本網頁可用來測試手速，並且有不同時長的選擇，請選擇下列一種時長，並開始進行測試</p>
-      <div className="button">
-        <button onClick={one}>1sec</button>
-        <button onClick={three}>3sec</button>
-        <button onClick={five}>5sec</button>
-        <button onClick={ten}>10sec</button>
-        <button onClick={fifteen}>15sec</button>
-        <button onClick={thirty}>30sec</button>
-        <button onClick={sixty}>60sec</button>
-        <button onClick={one_hundred}>100sec</button>
-        <button onClick={one_hundred_and_eighty}>180sec</button>
+      <h1>敲擊穩定度測試</h1>
+      <p>本網頁可用來測試手的敲擊穩定度，並且有不同速度與時長的選擇，請輸入一個BPM與小節數，並開始進行測試</p>
+      
+      {/* BPM輸入框 */}
+      <div>
+        <label htmlFor="bpm">輸入 BPM: </label>
+        <input type="number" id="bpm" name="bpm" placeholder="例如：120" />
       </div>
+      
+      {/* 小節數輸入框 */}
+      <div>
+        <label htmlFor="bars">輸入小節數: </label>
+        <input type="number" id="bars" name="bars" placeholder="例如：4" />
+      </div>
+      
+      {/* 開始測試按鈕 */}
+      <button onClick={() => gocount()}>開始測試</button>
     </div>
   );
 }
 
 
 
-function Count() {
-  const [count, setCount] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [timerStarted, setTimerStarted] = useState(false);
-  const [mode, setMode] = useState(0);
-  const navigate = useNavigate();
 
+
+
+
+const TapTest = ({ navigate }) => {
+  const [bpm, setBpm] = useState(120); // 每分鐘拍子數
+  const [bars, setBars] = useState(4); // 小節數
+  const [currentBeat, setCurrentBeat] = useState(-3); // 預備拍的初始值
+  const [startTime, setStartTime] = useState(null);
+  const [deviation, setDeviation] = useState([]); // 偏差記錄
+  const [isRunning, setIsRunning] = useState(false);
+  const tickSound1 = new Audio("/e/src/assets/beats1.mp3");
+  const tickSound2 = new Audio("/e/src/assets/beats2.mp3");
+  const millisecondsPerBeat = (60 / bpm) * 1000; // 每拍的毫秒數
+  const [start, setStart] = useState("beats");
   useEffect(() => {
     let interval;
-    if (timerStarted) {
-      console.log("計時開始...");
+    if (isRunning) {
       interval = setInterval(() => {
-        setSeconds((prev) => {
-          if (prev >= secmode) {
-            console.log(count);
-            clearInterval(interval);
-            alert("TIME'S UP");
-            setMode(1);
-            cps = count / secmode;
-            console.log(count);
-            console.log(secmode);
-            console.log(cps);
-            setTimerStarted(false); // Stop timer
-            return prev; // 停止計時
-          }
-          return prev + 0.01;
-        });
-      }, 10);
+        if(currentBeat%4==1||currentBeat===-3)tickSound1.play();
+        else tickSound2.play();
+        setCurrentBeat((prev) => prev + 1); // 只由 setInterval 更新 currentBeat
+      }, millisecondsPerBeat);
     }
-    return () => {
-      if (interval) {
-        console.log("計時器清除");
-        clearInterval(interval);
-      }
-    };
-  }, [timerStarted, secmode, count]);
+    return () => clearInterval(interval); // 清理 interval 防止記憶體洩漏
+  }, [isRunning, millisecondsPerBeat]);
+  useEffect(() => {
+    if(currentBeat===0)setStart("beats(下一拍開始!)");
+    else setStart("beats");
+    console.log(currentBeat);
+  }, [currentBeat]);
+  
+  const handleStart = () => {
+    setIsRunning(true);
+    setCurrentBeat(-3); // 從預備拍開始
+    setStartTime(Date.now());
+
+    // 預備拍邏輯
+    setTimeout(() => {
+      setCurrentBeat(0); // 正式開始測試的第一拍
+    }, 4 * millisecondsPerBeat);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.code === "Space") {
+      const tapTime = Date.now(); // 記錄按鍵時間
+      const expectedTime = startTime + currentBeat * millisecondsPerBeat; // 計算理想時間
+      const offset = tapTime - expectedTime; // 偏差
+      setDeviation((prev) => [...prev, offset]); // 保存偏差
+      console.log(`偏差：${offset} 毫秒`);
+      // 此處不重置或更改 `currentBeat`
+    }
+  };
 
   useEffect(() => {
-    if (mode === 1) {
-      navigate("/result");
-    }
-  }, [mode, navigate]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown); // 清理事件監聽器
+  }, [startTime, currentBeat, millisecondsPerBeat]);
 
   useEffect(() => {
-    console.log(`Count updated: ${count}`);
-  }, [count]);
-
-  function handleClick() {
-    if (mode === 0) {
-      setCount((prevCount) => {
-        const newCount = prevCount + 1;
-        console.log(newCount);
-        return newCount;
-      });
+    // 測試完成後跳轉至 /Result
+    if (currentBeat >= bars * 4) {
+      setIsRunning(false);
+      alert("TIME'S UP!")
+      navigate("/Result", { state: { deviations: deviation } }); // 傳遞偏差資料至結果分頁
     }
-    if (!timerStarted) {
-      setTimerStarted(true);
-    }
-  }
+  }, [currentBeat, bars, deviation, navigate]);
 
   return (
     <div>
-      <button className="CountButton" onClick={handleClick}>{count}</button>
-      <p className="timer">計時：{seconds.toFixed(2)}/{secmode} 秒</p>
+      <h1>敲擊穩定度測試</h1>
+      <div>
+        <label>BPM: {bpm}</label>
+      </div>
+      <div>
+        <label>小節數: {bars}</label>
+      </div>
+      <button onClick={handleStart} className="CountButton">點擊以開始測試</button>
+      <h2>目前拍子: {currentBeat}{start}</h2>
+      <h3>按下空白鍵偏差 (毫秒): {deviation.join(", ")}</h3>
     </div>
   );
-}
+};
+
+
 
 
 
@@ -196,7 +188,7 @@ function App() {
         <Routes>
           <Route exact path="/" element={<div />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/count" element={<Count />} />
+          <Route path="/TapTest" element={<TapTest />} />
           <Route path="/result" element={<Result />} />
         </Routes>
       </div>
