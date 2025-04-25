@@ -54,3 +54,21 @@
 .timer{
   font-size: 100px;
 }
+.fade{
+  position:relative;
+  animation-duration: 1s;
+  animation-name: slidein;
+}
+@keyframes slidein {
+  from {
+    top:-50px;
+    left:-50px;
+    filter:blur(10em)
+  }
+
+  to {
+    top:0px;
+    left:0px;
+    filter:blur(0em)
+  }
+}
