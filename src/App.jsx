@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import "./App.css";
-
+const playSounds1 = () => {
+  const sound1 = new Audio("/src/assets/beats1.mp3");
+  sound1.cloneNode(true).play();
+};
+const playSounds2 = () => {
+  const sound2 = new Audio("/src/assets/beats2.mp3");
+  sound2.cloneNode(true).play();
+};
 class App {
   // Static properties for global state
   static bpm = 0;
@@ -37,10 +44,13 @@ class App {
       App.setBpm(bpmInput);
       App.setBars(barsInput);
 
-      console.log("BPM:", App.bpm);
-      console.log("Bars:", App.bars);
-
-      navigate("/TapTest");
+      if(bpmInput>1500||barsInput>100){
+        alert("數值太大，請重新輸入")
+      }
+      else if(bpmInput<=0||barsInput<=0){
+        alert("數值不合法，請重新輸入")
+      }
+      else navigate("/TapTest");
     };
 
     return (
@@ -50,11 +60,11 @@ class App {
           本網頁可用來測試手的敲擊穩定度，並且有不同速度與時長的選擇，請輸入一個BPM與小節數，並開始進行測試
         </p>
         <div>
-          <label htmlFor="bpm">輸入 BPM: </label>
+          <label htmlFor="bpm">輸入BPM &#40; &lt;1500 &#41; : </label>
           <input type="number" id="bpm" name="bpm" placeholder="例如：120" />
         </div>
         <div>
-          <label htmlFor="bars">輸入小節數: </label>
+          <label htmlFor="bars">輸入小節數 &#40; &lt;100 &#41; : </label>
           <input type="number" id="bars" name="bars" placeholder="例如：4" />
         </div>
         <button onClick={handleStartTest}>開始測試</button>
@@ -66,6 +76,7 @@ class App {
   static TapTest = () => {
     const navigate = useNavigate();
     const [currentBeat, setCurrentBeat] = useState(-3);
+    const [count, setcount] = useState(0);
     const [startTime, setStartTime] = useState(null);
     const [deviation, setDeviation] = useState([]);
     const [isRunning, setIsRunning] = useState(false);
@@ -76,18 +87,15 @@ class App {
     const bars = App.bars;
     const millisecondsPerBeat = (60 / bpm) * 1000;
 
-    const tickSound1 = new Audio("/src/assets/beats1.mp3");
-    const tickSound2 = new Audio("/src/assets/beats2.mp3");
-
     useEffect(() => {
       let interval;
       if (isRunning) {
         interval = setInterval(() => {
           if (beatCount % 4 === 1 || beatCount === -3) {
-            tickSound1.play();
+            playSounds1();
             console.log("E");
           } else {
-            tickSound2.play();
+            playSounds2();
             console.log("F");
           }
           beatCount++;
@@ -96,7 +104,7 @@ class App {
       }
       return () => clearInterval(interval);
     }, [isRunning, millisecondsPerBeat]);
-
+    
     useEffect(() => {
       if (currentBeat === 0) setStartMessage("beats(下一拍開始!)");
       else setStartMessage("beats");
@@ -113,15 +121,18 @@ class App {
     };
 
     const handleKeyDown = (e) => {
-      if (e.code === "Space" && isRunning && currentBeat >= 0) {
+      if(e.code === "Space"&&!isRunning){
+        handleStart();
+      }
+      if (e.code === "Space" && isRunning && currentBeat > 0) {
         const tapTime = Date.now();
         const expectedTime = startTime + currentBeat * millisecondsPerBeat;
         const offset = tapTime - expectedTime;
 
         setDeviation((prev) => [...prev, offset]);
         App.addToScore(offset);
-
-        console.log(`偏差：${offset} 毫秒`);
+        setcount(count+1);
+        console.log(`偏差：${offset-avgscore} 毫秒`);
       }
     };
 
@@ -147,9 +158,7 @@ class App {
         <div>
           <label>小節數: {bars}</label>
         </div>
-        <button onClick={handleStart} className="CountButton">
-          點擊以開始測試
-        </button>
+          <label>按空白鍵開始</label>
         <h2>
           目前拍子: {currentBeat}
           {startMessage}
@@ -161,12 +170,12 @@ class App {
 
   // Result Component
   static Result = () => {
-    const avgscore = App.score / (App.bars * 4);
+    var avgscore = App.score+(App.bars*4-count)*200 / (App.bars * 4);
 
     return (
       <div>
-        <h1>YOUR Score IS...?</h1>
-        <p>{avgscore}</p>
+        <h1>YOUR SCORE IS...?</h1>
+        <p>{avgscore<0?-avgscore:avgscore}</p>
       </div>
     );
   };
