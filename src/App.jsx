@@ -60,6 +60,7 @@ class App {
                 App.setOffset(OffsetInput)
                 App.millisecondsPerBeat = (60 / App.bpm) * 1000;
                 this.score=0;
+                this.hits=[];
                 navigate("/TapTest");
             }
         };
@@ -252,6 +253,7 @@ class App {
         }, []);
         const StartAgain = () =>{
             this.score=0;
+            this.hits=[];
             navigate("/TapTest");
         }
         const NumberText = ({ value }) => {
