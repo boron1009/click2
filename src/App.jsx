@@ -254,11 +254,21 @@ class App {
             this.score=0;
             navigate("/TapTest");
         }
+        const NumberText = ({ value }) => {
+          const getColor = (num) => {
+            if (num > 50) return "red";
+            if (num > 20) return "orange";
+            return "green";
+          };
+          return <span style={{ color: getColor(value) }}>{value}</span>;
+
+        }
+
     return (
             <>
                 <div>
                     <h1>YOUR SCORE IS...?</h1>
-                    <h1 class="score">{App.score < 0 ? 0 : App.score}</h1>
+                    <NumberText value={App.score < 0 ? 0 : App.score} />
                     <button onClick={() => navigate("/Home")}>go home</button>
                     <button onClick={StartAgain}>test again</button>
                 </div>
