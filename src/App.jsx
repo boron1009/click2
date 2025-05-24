@@ -256,9 +256,9 @@ class App {
         }
         const NumberText = ({ value }) => {
           const getColor = (num) => {
-            if (num > 50) return "red";
-            if (num > 20) return "orange";
-            return "green";
+            if (num > 70) return "green";
+            if (num > 50) return "orange";
+            return "red";
           };
           return <span style={{ color: getColor(value) }}>{value}</span>;
 
@@ -268,7 +268,7 @@ class App {
             <>
                 <div>
                     <h1>YOUR SCORE IS...?</h1>
-                    <NumberText value={App.score < 0 ? 0 : App.score} />
+                    <h1><NumberText value={App.score < 0 ? 0 : App.score} /></h1>
                     <button onClick={() => navigate("/Home")}>go home</button>
                     <button onClick={StartAgain}>test again</button>
                 </div>
